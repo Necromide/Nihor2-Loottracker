@@ -636,13 +636,13 @@ async function viewSettings() {
   renderCatalog();
   $("#s-isearch").oninput = (e) => { S.itemSearch = e.target.value; renderCatalog(); };
   $("#s-lang").onchange = async (e) => { await api("settings", { language: e.target.value }); S.lang = e.target.value; renderAll(); };
-  $("#s-browse").onclick = async () => { const r = await api("pick_folder", {}); if (r.path) $("#s-path").value = r.path; };
+  $("#s-browse").onclick = async () => { const r = await api("pick_folder", {}); if (r.path) { $("#s-path").value = r.path; $("#s-savepath").click(); } };
   $("#s-savepath").onclick = async () => {
     const p = $("#s-path").value.trim();
     const c = await api("check_path", { path: p });
     const res = $("#s-pathres");
-    res.className = c.ok ? "ok-text" : "bad-text"; res.textContent = c.ok ? "✓ " + t("set_ok") : t("set_bad");
-    if (c.ok) { await api("settings", { client_path: p }); await pollStatus(); }
+    res.className = c.ok ? "ok-text" : "bad-text"; res.textContent = pathMsg(c);
+    if (c.ok) { $("#s-path").value = c.path; await api("settings", { client_path: c.path }); await pollStatus(); }
   };
   $("#s-file").onchange = async (e) => {
     let total = 0;
@@ -685,21 +685,42 @@ function mergeDialog(name) {
 }
 
 // ---------------------------------------------------------------- setup screen
+function pathMsg(c) {
+  if (c.ok) return "✓ " + t("set_ok") + (c.path ? ": " + c.path : "");
+  return t("set_reason_" + (c.reason || "not_found"), { p: c.path || "" });
+}
 function viewSetup() {
   $("#view").innerHTML = `<div class="card setup"><h1>${t("setup_title")}</h1><p>${esc(t("setup_text"))}</p>
+    <div id="su-found" class="muted"><span class="spin"></span> ${t("setup_detecting")}</div>
     <div class="row"><input id="su-path" placeholder="C:\\…\\Nihor2 - Chronicles of Jinteia" value="${esc(S.status.client_path || "")}"><button id="su-browse">${t("set_browse")}</button></div>
-    <p id="su-res" class="bad-text">${S.status.client_path ? t("set_bad") : ""}</p>
+    <p id="su-res"></p>
     <button class="primary" id="su-go">${t("setup_go")}</button>
     <p style="margin-top:20px"><select id="su-lang"><option value="de" ${S.lang === "de" ? "selected" : ""}>Deutsch</option><option value="en" ${S.lang === "en" ? "selected" : ""}>English</option></select></p></div>`;
-  $("#su-browse").onclick = async () => { const r = await api("pick_folder", {}); if (r.path) $("#su-path").value = r.path; };
-  $("#su-lang").onchange = async (e) => { await api("settings", { language: e.target.value }); S.lang = e.target.value; renderAll(); };
-  $("#su-go").onclick = async () => {
-    const p = $("#su-path").value.trim();
-    const c = await api("check_path", { path: p });
-    if (!c.ok) { $("#su-res").textContent = t("set_bad"); return; }
-    await api("settings", { client_path: p });
+  const check = async () => {
+    const c = await api("check_path", { path: $("#su-path").value });
+    const res = $("#su-res");
+    res.className = c.ok ? "ok-text" : "bad-text";
+    res.textContent = pathMsg(c);
+    return c;
+  };
+  const go = async () => {
+    const c = await check();
+    if (!c.ok) return;
+    await api("settings", { client_path: c.path });
     await pollStatus(); location.hash = "#overview"; renderAll();
   };
+  $("#su-browse").onclick = async () => { const r = await api("pick_folder", {}); if (r.path) { $("#su-path").value = r.path; check(); } };
+  $("#su-path").onchange = check;
+  $("#su-lang").onchange = async (e) => { await api("settings", { language: e.target.value }); S.lang = e.target.value; renderAll(); };
+  $("#su-go").onclick = go;
+  api("detect_paths", {}).then((r) => {
+    const el = $("#su-found");
+    if (!el) return;
+    if (!r.paths.length) { el.textContent = t("setup_none_found"); return; }
+    el.innerHTML = `${t("setup_found")}<br>` + r.paths.map((p, i) => `<button class="small ghost" data-p="${i}" style="margin:4px 0">📁 ${esc(p)}</button>`).join("<br>");
+    el.querySelectorAll("[data-p]").forEach((b) => (b.onclick = () => { $("#su-path").value = r.paths[Number(b.dataset.p)]; check(); }));
+    if (!$("#su-path").value) { $("#su-path").value = r.paths[0]; check(); }
+  }).catch(() => { const el = $("#su-found"); if (el) el.textContent = ""; });
 }
 
 // ---------------------------------------------------------------- shell

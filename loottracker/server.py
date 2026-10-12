@@ -68,13 +68,64 @@ def pick_folder():
         return None
 
 
+_INVISIBLE = dict.fromkeys(map(ord, "\u200e\u200f\u202a\u202b\u202c\u202d\u202e\ufeff"), None)
+
+
+def normalize_path(path):
+    """Clean up pasted paths: quotes ("Copy as path"), invisible Unicode marks, the log file itself."""
+    if not path:
+        return ""
+    p = str(path).translate(_INVISIBLE).strip().strip('"').strip("'").strip()
+    p = os.path.expandvars(os.path.expanduser(p))
+    if p.lower().endswith(config.ACTIVE_LOG):
+        p = os.path.dirname(p)
+    return os.path.normpath(p) if p else ""
+
+
 def check_client_path(path):
-    if not path or not os.path.isdir(path):
-        return {"ok": False, "reason": "not_found"}
+    path = normalize_path(path)
+    if not path:
+        return {"ok": False, "reason": "empty", "path": path}
+    if not os.path.isdir(path):
+        return {"ok": False, "reason": "not_found", "path": path}
     has_active = os.path.isfile(os.path.join(path, config.ACTIVE_LOG))
     has_archive = os.path.isdir(os.path.join(path, config.ARCHIVE_DIR))
-    return {"ok": has_active or has_archive, "active": has_active, "archive": has_archive,
+    return {"ok": has_active or has_archive, "active": has_active, "archive": has_archive, "path": path,
             "reason": None if (has_active or has_archive) else "no_logs"}
+
+
+def detect_client_paths():
+    """Look for client folders (containing info_chat_loot.log) in the usual places."""
+    roots = []
+    exe_dir = os.path.dirname(sys.executable if getattr(sys, "frozen", False) else os.path.abspath(__file__))
+    roots += [exe_dir, os.path.dirname(exe_dir)]
+    home = os.path.expanduser("~")
+    for sub in ("Downloads", "Desktop", "Documents", "Games", "OneDrive\\Desktop", ""):
+        roots.append(os.path.join(home, sub) if sub else home)
+    for drive in "CDEFG":
+        for sub in ("", "Games", "Spiele", "Program Files", "Program Files (x86)"):
+            roots.append(f"{drive}:\\{sub}")
+    found, seen = [], set()
+    for r in roots:
+        try:
+            if not os.path.isdir(r):
+                continue
+            cands = [r] + [os.path.join(r, n) for n in os.listdir(r)]
+        except OSError:
+            continue
+        for c in cands:
+            key = os.path.normcase(c)
+            if key in seen:
+                continue
+            seen.add(key)
+            try:
+                if os.path.isfile(os.path.join(c, config.ACTIVE_LOG)):
+                    found.append(c)
+            except OSError:
+                pass
+        if len(found) >= 5:
+            break
+    return found
 
 
 def make_handler(app):
@@ -191,6 +242,8 @@ def make_handler(app):
             if name == "settings":
                 b = self._jbody()
                 rebuild = False
+                if "client_path" in b:
+                    b["client_path"] = normalize_path(b["client_path"])
                 for key in ("language", "client_path", "rules", "chest_patterns", "categories"):
                     if key in b:
                         app.db.set_setting(key, b[key])
@@ -208,6 +261,8 @@ def make_handler(app):
                 return self._json(app.settings())
             if name == "check_path":
                 return self._json(check_client_path(self._jbody().get("path")))
+            if name == "detect_paths":
+                return self._json({"paths": detect_client_paths()})
             if name == "pick_folder":
                 return self._json({"path": pick_folder()})
             if name == "alias":

@@ -7,7 +7,7 @@ in the app's settings page without touching code.
 import copy
 
 APP_NAME = "Nihor2 - Loottracker"
-APP_VERSION = "0.1.0"
+APP_VERSION = "0.1.1"
 
 DEFAULT_RULES = {
     # Every portal run ends with exactly one splinter drop.

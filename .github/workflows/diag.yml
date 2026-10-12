@@ -19,6 +19,11 @@ jobs:
           $body = @{ path = $p } | ConvertTo-Json
           $c = (Invoke-WebRequest -UseBasicParsing -Method Post -Uri http://127.0.0.1:8765/api/check_path -Body $body -ContentType "application/json").Content
           Write-Host "::warning::check_path=$c"
+          $body2 = @{ path = '"C:\Users\runneradmin\Downloads\Nihor2 - Chronicles of Jinteia\info_chat_loot.log"' } | ConvertTo-Json
+          $c2 = (Invoke-WebRequest -UseBasicParsing -Method Post -Uri http://127.0.0.1:8765/api/check_path -Body $body2 -ContentType "application/json").Content
+          Write-Host "::warning::check_quoted=$c2"
+          $d2 = (Invoke-WebRequest -UseBasicParsing -Method Post -Uri http://127.0.0.1:8765/api/detect_paths -Body "{}" -ContentType "application/json").Content
+          Write-Host "::warning::detect=$d2"
           $st = (Invoke-WebRequest -UseBasicParsing -Uri http://127.0.0.1:8765/api/status).Content.Substring(0,400)
           Write-Host "::warning::status=$st"
           $e = (Get-Content err.txt -Raw) -replace "`r?`n"," | "
