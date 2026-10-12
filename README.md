@@ -44,7 +44,7 @@ pip install pyinstaller
 pyinstaller loottracker.spec
 ```
 
-Auf GitHub baut die Action `.github/workflows/build.yml` die .exe automatisch, sobald ein Tag `v*` gepusht wird (z. B. `git tag v0.1.0 && git push --tags`), und hängt sie an das Release.
+Auf GitHub baut die Action `.github/workflows/build.yml` die .exe automatisch, sobald ein Release veröffentlicht oder ein Tag `v*` gepusht wird, und hängt sie an das Release.
 
 ## Wie die Erkennung funktioniert
 
