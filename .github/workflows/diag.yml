@@ -17,6 +17,9 @@ jobs:
           Start-Sleep 5
           $p = "C:/Users/runneradmin/Downloads/Nihor2 - Chronicles of Jinteia"
           $body = @{ path = $p } | ConvertTo-Json
-          Write-Host "check_path:" (Invoke-WebRequest -UseBasicParsing -Method Post -Uri http://127.0.0.1:8765/api/check_path -Body $body -ContentType "application/json").Content
-          Write-Host "status:" (Invoke-WebRequest -UseBasicParsing -Uri http://127.0.0.1:8765/api/status).Content.Substring(0,300)
-          Get-Content err.txt
+          $c = (Invoke-WebRequest -UseBasicParsing -Method Post -Uri http://127.0.0.1:8765/api/check_path -Body $body -ContentType "application/json").Content
+          Write-Host "::warning::check_path=$c"
+          $st = (Invoke-WebRequest -UseBasicParsing -Uri http://127.0.0.1:8765/api/status).Content.Substring(0,400)
+          Write-Host "::warning::status=$st"
+          $e = (Get-Content err.txt -Raw) -replace "`r?`n"," | "
+          Write-Host "::warning::stderr=$e"
