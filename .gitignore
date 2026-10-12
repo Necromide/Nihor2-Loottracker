@@ -1,0 +1,13 @@
+# runtime data (database, imported logs) – never commit
+data/
+*.db
+*.db-wal
+*.db-shm
+*.log
+
+# python / build
+__pycache__/
+*.pyc
+build/
+dist/
+.venv/

@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nihor2 - Loottracker</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><path d='M16 2l12 7v14l-12 7-12-7V9z' fill='%23c98500'/><path d='M16 9l6 3.5v7L16 23l-6-3.5v-7z' fill='%23141413'/></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <svg viewBox="0 0 32 32" width="26" height="26" aria-hidden="true"><path d="M16 2l12 7v14l-12 7-12-7V9z" fill="var(--gold)"/><path d="M16 9l6 3.5v7L16 23l-6-3.5v-7z" fill="var(--bg)"/></svg>
+    <div><b>Nihor2</b> <span>Loottracker</span></div>
+  </div>
+  <nav id="nav"></nav>
+  <div class="topright">
+    <span id="livebadge" class="livebadge hidden"></span>
+    <span id="status" class="status"></span>
+    <button id="lang" class="ghost small" title="Sprache / Language">EN</button>
+  </div>
+</header>
+
+<section id="filterbar" class="filterbar"></section>
+
+<main id="view"></main>
+
+<div id="tooltip" class="tooltip hidden"></div>
+<div id="modal" class="modal hidden"><div class="modal-card"><button class="modal-x ghost" data-close>×</button><div id="modal-body"></div></div></div>
+
+<script src="i18n.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
