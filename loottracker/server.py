@@ -33,6 +33,7 @@ class App:
         self.sessions = Sessions(self.db)
         self.analysing = False
         self.importer = Importer(self.db, on_new_data=self.on_new_data)
+        self.aliases_changed = self.db.apply_default_aliases()
 
     def settings(self):
         return self.db.get_settings()
@@ -50,6 +51,8 @@ class App:
         threading.Thread(target=run, daemon=True).start()
 
     def start(self):
+        if self.aliases_changed:
+            self.full_rebuild_async()
         self.importer.start(lambda: self.settings().get("client_path"))
 
 

@@ -145,6 +145,21 @@ class Database:
         with self.lock:
             return [r[0] for r in self.conn.execute(q, names)]
 
+    def apply_default_aliases(self):
+        """Insert built-in DE->EN aliases once per DEFAULT_ALIASES_VERSION. Returns True if anything changed."""
+        done = self.get_settings().get("default_aliases_version", 0)
+        if done >= config.DEFAULT_ALIASES_VERSION:
+            return False
+        changed = False
+        with self.lock:
+            for name, canon in config.DEFAULT_ALIASES.items():
+                if self.conn.execute("SELECT 1 FROM aliases WHERE name=?", (name,)).fetchone():
+                    continue  # user already decided something for this name
+                self.set_alias(name, canon)
+                changed = True
+        self.set_setting("default_aliases_version", config.DEFAULT_ALIASES_VERSION)
+        return changed
+
     # ---- prices ---------------------------------------------------------
     def prices(self):
         with self.lock:

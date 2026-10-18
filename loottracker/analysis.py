@@ -111,10 +111,11 @@ def _rebuild(db, settings, since_ts):
         for ts, ids in per_sec.items():
             if {req_ids[i] for i in ids if i in req_ids} != need_req:
                 continue
-            if len({sig_ids[i] for i in ids if i in sig_ids}) < sig_min:
-                continue
             if ids & end_ids:
                 continue  # same second as the splinter -> normal end boss
+            sig_ok = len({sig_ids[i] for i in ids if i in sig_ids}) >= sig_min
+            if not sig_ok and not se_rules.get("yang_fallback", False):
+                continue
             k = bisect.bisect_left(se_ends, ts)
             if k >= len(se_ends) or se_ends[k] - ts > int(se_rules["max_before_end_s"]):
                 continue
@@ -130,6 +131,8 @@ def _rebuild(db, settings, since_ts):
                     "SELECT 1 FROM drops WHERE item_id IN %s AND ts BETWEEN ? AND ? LIMIT 1" % _in(yang_ids),
                     (ts - pw, ts + pw),
                 ).fetchone() is not None
+            if not sig_ok and yang < int(se_rules["yang_confirm"]):
+                continue  # fallback needs the Yang confirmation
             if yang >= int(se_rules["yang_confirm"]):
                 conf = "confirmed"
             elif not present:

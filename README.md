@@ -13,7 +13,7 @@ Ein lokales Tool für den Metin2-Server **Nihor2 – Chronicles of Jinteia**, da
 - **Filter** – Zeitraum, Portale, Super-Elite, Sessions, Kategorie, Item-Suche, Wochentage, Uhrzeit, Mindest-Runs; Kisten-Inhalte und Drops außerhalb von Portalen jeweils ausblenden / einbeziehen / nur diese.
 - **Preise** (optional) pro Item → Wert pro Run und pro Stunde.
 - **Aliase** – zwei Namen desselben Items zusammenführen (z. B. nach einem Wechsel der Client-Sprache).
-- Deutsch / Englisch umschaltbar.
+- Deutsch / Englisch umschaltbar – und funktioniert mit **deutschem und englischem Client** (auch gemischt, wenn die Client-Sprache gewechselt wurde). Die deutschen Item-Namen werden automatisch den englischen zugeordnet.
 
 Das Tool **liest den Client-Ordner nur** und greift nicht ins Spiel ein. Die Oberfläche läuft im Browser, ist aber nur auf deinem eigenen PC erreichbar (`127.0.0.1`).
 

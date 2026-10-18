@@ -39,6 +39,7 @@ class CoreTest(unittest.TestCase):
         os.makedirs(os.path.join(self.client, "loot_history_archive"))
         self.active = os.path.join(self.client, "info_chat_loot.log")
         self.db = Database(os.path.join(self.dir, "t.db"))
+        self.db.apply_default_aliases()
         self.imp = Importer(self.db)
 
     def tearDown(self):
@@ -102,6 +103,24 @@ class CoreTest(unittest.TestCase):
         self.assertEqual(r["portals"]["elite"]["runs"], 1)  # run counts (splinter inside window)
         self.assertEqual(r["yang_total"], 15_000_000)      # but only drops inside the window
         self.assertEqual(r["super_elite"]["count"], 1)
+
+    def test_german_client(self):
+        d = "12/10/26"
+        de = [line(d, "10:00:00", 3, "Roter Rohdiamant"),
+              line(d, "10:00:10", 1, "Lektüre Truhe [G-P]"), line(d, "10:00:10", 1, "Lektüre Truhe [M-G]"),
+              line(d, "10:00:11", 15_000_000, "Yang"),
+              line(d, "10:00:30", 1, "Elite-Splitter"), line(d, "10:00:30", 150, "Portalscherbe"),
+              line(d, "10:02:00", 1, "Roter Rohdiamant"), line(d, "10:02:30", 1, "Großer Splitter"),
+              line(d, "10:04:00", 1, "Roter Rohdiamant"), line(d, "10:04:30", 1, "Mystischer Splitter")]
+        en = elite_run(d, 10, 10)  # same player later on an English client
+        self.write(self.active, de + en)
+        self.sync()
+        runs = self.db.conn.execute("SELECT type, se, se_conf FROM runs ORDER BY end").fetchall()
+        self.assertEqual([tuple(r) for r in runs], [("elite", 1, "confirmed"), ("greater", 0, None),
+                                                    ("mystic", 0, None), ("elite", 0, None)])
+        r = Stats(self.db).report({}, self.db.get_settings())
+        red = [x for x in r["portals"]["elite"]["items"] if x["item"] == "Red Raw Diamond"][0]
+        self.assertEqual(red["runs"], 2)  # German and English name counted as one item
 
 
 if __name__ == "__main__":

@@ -7,7 +7,7 @@ in the app's settings page without touching code.
 import copy
 
 APP_NAME = "Nihor2 - Loottracker"
-APP_VERSION = "0.1.1"
+APP_VERSION = "0.2.0"
 
 DEFAULT_RULES = {
     # Every portal run ends with exactly one splinter drop.
@@ -30,6 +30,9 @@ DEFAULT_RULES = {
         # ... together with at least `signature_min` of these ...
         "signature": ["Divine Blessing", "Divine Enchanting", "Nataraja's Medallion"],
         "signature_min": 2,
+        # Fallback (e.g. German client, where the signature items have other names):
+        # both chests away from the splinter + Yang >= yang_confirm also counts.
+        "yang_fallback": True,
         # ... and NOT in the same second as the run's splinter (that would be
         # the normal end boss).
         "yang_item": "Yang",
@@ -51,16 +54,89 @@ DEFAULT_CHEST_PATTERNS = [
 # Item categories for filtering. First matching category wins.
 DEFAULT_CATEGORIES = [
     {"key": "yang", "de": "Yang", "en": "Yang", "patterns": ["Yang"]},
-    {"key": "splinter", "de": "Splitter", "en": "Splinters", "patterns": ["* Splinter"]},
+    {"key": "splinter", "de": "Splitter", "en": "Splinters", "patterns": ["* Splinter", "*-Splitter", "Großer Splitter", "Mystischer Splitter"]},
     {"key": "skillbook", "de": "Fertigkeitsbücher", "en": "Skill books", "patterns": ["* Skill Book [*]", "* Lektüre [*]", "Book of *"]},
     {"key": "chest", "de": "Truhen & Kisten", "en": "Chests", "patterns": ["*Chest*", "*Truhe*", "*Kiste*"]},
-    {"key": "rawdiamond", "de": "Rohdiamanten", "en": "Raw diamonds", "patterns": ["* Raw Diamond"]},
-    {"key": "gem", "de": "Edelsteine", "en": "Gemstones", "patterns": ["* Gemstone", "Lapislazuli", "Jewel of *"]},
-    {"key": "belt", "de": "Gürtel", "en": "Belts", "patterns": ["* Belt"]},
-    {"key": "scroll", "de": "Schriftrollen", "en": "Scrolls", "patterns": ["* Scroll"]},
+    {"key": "rawdiamond", "de": "Rohdiamanten", "en": "Raw diamonds", "patterns": ["* Raw Diamond", "* Rohdiamant"]},
+    {"key": "gem", "de": "Edelsteine", "en": "Gemstones", "patterns": ["* Gemstone", "Lapislazuli", "Jewel of *", "Juwel der *"]},
+    {"key": "belt", "de": "Gürtel", "en": "Belts", "patterns": ["* Belt", "* Gürtel"]},
+    {"key": "scroll", "de": "Schriftrollen", "en": "Scrolls", "patterns": ["* Scroll", "*schriftrolle"]},
     {"key": "shard", "de": "Scherben", "en": "Shards", "patterns": ["Shard", "* Shard"]},
-    {"key": "upgrade", "de": "Verzauberung & Segen", "en": "Enchanting & blessing", "patterns": ["* Enchanting", "* Blessing", "* Smithing Hammer"]},
+    {"key": "upgrade", "de": "Verzauberung & Segen", "en": "Enchanting & blessing", "patterns": ["* Enchanting", "* Blessing", "* Smithing Hammer", "* Verzaubern"]},
 ]
+
+# German client name -> English name. Applied automatically so that runs and
+# statistics work for German clients and for players who switched languages.
+# Bump DEFAULT_ALIASES_VERSION when adding entries (they are then applied once more).
+DEFAULT_ALIASES_VERSION = 1
+DEFAULT_ALIASES = {
+    # portals
+    "Elite-Splitter": "Elite Splinter",
+    "Mystischer Splitter": "Mystic Splinter",
+    "Großer Splitter": "Greater Splinter",
+    # Super-Elite package
+    "Lektüre Truhe [G-P]": "Skill Book Chest [G-P]",
+    "Lektüre Truhe [M-G]": "Skill Book Chest [M-G]",
+    "Göttlicher Segen": "Divine Blessing",
+    "Göttliches Verzaubern": "Divine Enchanting",
+    "Natarajas Medaillon": "Nataraja's Medallion",
+    "Außergewöhnliche blaue Flamme": "Exceptional Blue Flame",
+    "Außergewöhnliche rote Flamme": "Exceptional Red Flame",
+    "Blauer Edelstein": "Blue Gemstone",
+    "Grüner Edelstein": "Green Gemstone",
+    # common drops (derived from logs where the client language was switched)
+    "Bruchstück": "Shard",
+    "Sturmkristallsplitter": "Storm Crystal Shard",
+    "Energiesplitter": "Energy Fragment",
+    "Grauer Rohdiamant": "Gray Raw Diamond",
+    "Violetter Rohdiamant": "Violet Raw Diamond",
+    "Roter Rohdiamant": "Red Raw Diamond",
+    "Grüner Rohdiamant": "Green Raw Diamond",
+    "Gelber Rohdiamant": "Yellow Raw Diamond",
+    "Blauer Rohdiamant": "Blue Raw Diamond",
+    "Juwel der Missgunst": "Jewel of Spite",
+    "Juwel der Weisheit": "Jewel of Wisdom",
+    "Juwel der Niedertracht": "Jewel of Malice",
+    "Verbessertes Verzaubern": "Improved Enchanting",
+    "Sagenhaftes Verzaubern": "Fabled Enchanting",
+    "Segensschriftrolle": "Blessing Scroll",
+    "Grüner Tasman": "Green Tasman",
+    "Blauer Tasman": "Blue Tasman",
+    "Violetter Tasman": "Violett Tasman",
+    "Gräten": "Fishbones",
+    "Stück eines Eulenpasses [L]": "Piece of an Owl Pass [L]",
+    "Stück eines Eulenpasses [R]": "Piece of an Owl Pass [R]",
+    "Seelenkristallerz": "Soul Crystal Ore",
+    "Geiststein Lava": "Lava Spirit Stone",
+    "Grüner Meteor": "Green Meteor",
+    "Blauer Meteor": "Blue Meteor",
+    "Roter Meteor": "Red Meteor",
+    "Grüner Meteorstaub": "Green Meteordust",
+    "Blauer Meteorstaub": "Blue Meteordust",
+    "Roter Meteorstaub": "Red Meteor Dust",
+    "Trank der Hast": "Potion of Haste",
+    "Rubinerz": "Ruby Ore",
+    "Grüner Trank (G)": "Green Potion(L)",
+    "Weiße Perle": "White Pearl",
+    "Blutrote Perle": "Blood-Red Pearl",
+    "Blaue Perle": "Blue Pearl",
+    "Stumpfe Eulenkralle": "Dull Owl Claw",
+    "Zerbrochenes Porzellan": "Broken Porcelain",
+    "Prächtige Feder": "Magnificent Feather",
+    "Steinstück": "Piece of Stone",
+    "Rostige Degenklinge": "Rusty Blade",
+    "Schatulle der Geiststeine": "Casket of Spirit Stones",
+    "Kakiblüte": "Kaki Blossom",
+    "Schmückende Haarnadel": "Ornamental Hairpin",
+    "Seelenstein+": "Soul Stone+",
+    "Mondlicht-Schatztruhe": "Moonlight Treasure Chest",
+    "Stück kaputte Rüstung": "Piece of Broken Armor",
+    "Stück Edelstein": "Piece of Gem",
+    "Blatt": "Leaf",
+    "Splitter eines legendären Seelensteins [1]": "Shard of a Legendary Soul Stone [1]",
+    "Splitter eines legendären Seelensteins [2]": "Shard of a Legendary Soul Stone [2]",
+    "Splitter eines legendären Seelensteins [3]": "Shard of a Legendary Soul Stone [3]",
+}
 
 DEFAULT_SETTINGS = {
     "language": "de",
