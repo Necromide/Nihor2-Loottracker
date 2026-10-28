@@ -329,6 +329,49 @@ function importingNotice() {
   return "";
 }
 
+
+// ---------------------------------------------------------------- special tracked items
+const trName = (x) => (S.lang === "de" ? x.de : x.en) || x.key;
+function trackedTiles(r) {
+  return (r.tracked || []).map((x) => {
+    const basis = x.base === "super_elite" ? t("tr_per_se") : t("tr_per_run", { p: portalName(x.base) });
+    const val = x.runs_with ? `${fmtInt(x.runs_with)} <span class="muted" style="font-size:15px">× · ${fmtPct(x.rate)}</span>` : `0 <span class="muted" style="font-size:15px">×</span>`;
+    const hint = x.base_runs
+      ? (x.runs_with ? `${basis} · ${t("ci95")} ${fmtPct(x.ci_lo)} – ${fmtPct(x.ci_hi)}` + (x.rate ? ` · ${t("one_in", { n: fmtInt(1 / x.rate) })}` : "")
+                     : t("tr_none_yet", { n: fmtInt(x.base_runs), hi: fmtPct(x.ci_hi), b: basis }))
+      : "";
+    return tile((x.jackpot ? "★ " : "") + trName(x), val, hint, x.jackpot ? "hero jackpot" : "");
+  }).join("");
+}
+function trackedSection(r) {
+  const list = r.tracked || [];
+  if (!list.length) return "";
+  let h = `<h2>${t("tr_title")}</h2><p class="sub">${esc(t("tr_explain"))}</p><div class="grid">${trackedTiles(r)}</div>`;
+  list.forEach((x, i) => {
+    h += `<h2>${(x.jackpot ? "★ " : "") + esc(trName(x))}</h2><div class="grid">`;
+    x.sources.forEach((s) => {
+      const lbl = s.source === "super_elite" ? t("tr_src_se") : t("tr_src_end", { p: portalName(s.source.replace(/_end$/, "")) });
+      h += tile(lbl, `${fmtInt(s.drops)} / ${fmtInt(s.events)}`, s.events ? `${fmtPct(s.rate)} · ${t("ci95")} ${fmtPct(s.ci_lo)} – ${fmtPct(s.ci_hi)}` : "");
+    });
+    h += tile(x.base === "super_elite" ? t("tr_since_se") : t("tr_since"), x.since == null ? "–" : fmtInt(x.since), x.last ? `${t("col_last")}: ${fmtDate(x.last)}` : t("tr_never"));
+    h += tile(t("tr_excluded"), fmtInt(x.excluded_qty), t("tr_excluded_hint"));
+    h += `</div>`;
+    if (x.hits.length) h += `<div id="t-tr-${i}" style="margin-top:10px"></div>`;
+  });
+  return h;
+}
+function trackedTables(r) {
+  (r.tracked || []).forEach((x, i) => {
+    const el = $("#t-tr-" + i);
+    if (!el) return;
+    table(el, "tr-" + x.key, [
+      { key: "ts", label: t("col_time"), fmt: (v) => fmtDate(v) },
+      { key: "qty", label: "#", num: true, fmt: fmtInt },
+      { key: "source", label: t("tr_col_source"), fmt: (v) => (v === "super_elite" ? t("tr_src_se") : t("tr_src_end", { p: portalName(v.replace(/_end$/, "")) })) },
+    ], x.hits, { defaultSort: { key: "ts", asc: false }, limit: 50, onRow: (h) => showRun(h.run_id) });
+  });
+}
+
 // ---------------------------------------------------------------- views
 function seTiles(se, minRuns) {
   const dim = se.runs < minRuns;
@@ -347,7 +390,7 @@ function viewOverview(r) {
     const p = r.portals[k];
     h += tile(portalName(k), fmtInt(p.runs), `${t("median_dur")}: ${fmtDur(p.median_duration)}`, "", portalColor(k));
   });
-  if (P.includes(r.super_elite.portal)) h += seTiles(r.super_elite, minRuns);
+  if (P.includes(r.super_elite.portal)) h += seTiles(r.super_elite, minRuns) + trackedTiles(r);
   h += tile(t("yang_total"), fmtCompact(r.yang_total), r.runs_total ? `${t("yang_per_run")}: ${fmtCompact(r.yang_total / r.runs_total)}` : "");
   if (r.value_total) h += tile(t("value_total"), fmtCompact(r.value_total), r.runs_total ? `/ ${t("runs")}: ${fmtCompact(r.value_total / r.runs_total)}` : "");
   h += `</div>`;
@@ -404,8 +447,10 @@ function viewSE(r) {
   h += tile(t("se_longest"), fmtInt(se.longest_streak), se.p_longest != null ? t("se_longest_hint", { n: fmtInt(se.longest_streak), p: fmtPct(se.p_longest) }) : "");
   h += tile(t("se_avg_gap"), se.avg_gap ? fmtNum(se.avg_gap, 1) : "–", "");
   h += `</div><p class="muted">${esc(t("se_breakdown", { c: se.by_conf.confirmed, s: se.by_conf.signature, n: se.by_conf.no_yang_data }))}</p>`;
+  h += trackedSection(r);
   h += `<h2>${t("se_list")}</h2><div id="t-se"></div>`;
   $("#view").innerHTML = h;
+  trackedTables(r);
   table($("#t-se"), "se", [
     { key: "ts", label: t("col_time"), fmt: (v) => fmtDate(v) },
     { key: "yang", label: t("col_yang"), num: true, fmt: (v) => (v ? fmtInt(v) : "–") },
@@ -502,6 +547,7 @@ async function viewLive() {
   S.portals.forEach((k) => { h += tile(portalName(k), fmtInt(r.portals[k].runs), `${fmtNum(r.portals[k].runs / hours, 1)} / ${t("h")}`, "", portalColor(k)); });
   h += tile(t("live_runs_h"), fmtNum(r.runs_total / hours, 1), `${fmtInt(r.runs_total)} ${t("runs")}`);
   h += tile(t("se_rate"), se.runs ? fmtPct(se.rate) : "–", `${fmtInt(se.count)} / ${fmtInt(se.runs)} ${t("se_runs")}`, "hero");
+  h += trackedTiles(r);
   h += tile(t("live_yang_h"), fmtCompact(r.yang_total / hours), `${t("yang_total")}: ${fmtCompact(r.yang_total)}`);
   if (r.value_total) h += tile(t("live_value_h"), fmtCompact(r.value_total / hours), `${t("value_total")}: ${fmtCompact(r.value_total)}`);
   h += `</div><div class="live-grid"><div style="min-width:0"><div class="tabs">${S.portals.map((k) =>
@@ -566,6 +612,7 @@ async function viewSessions() {
       [t("live_runs_h"), (r, s) => fmtNum(r.runs_total / Math.max(s.active_seconds / 3600, 1 / 3600), 1)],
       [t("se_count"), (r) => `${fmtInt(r.super_elite.count)} / ${fmtInt(r.super_elite.runs)}`],
       [t("se_rate"), (r) => fmtPct(r.super_elite.rate)],
+      ...((reps[0] && reps[0].tracked) || []).map((x, i) => [trName(x), (r) => { const y = r.tracked[i]; return `${fmtInt(y.runs_with)} (${fmtPct(y.rate)})`; }]),
       [t("yang_total"), (r) => fmtCompact(r.yang_total)],
       [t("live_yang_h"), (r, s) => fmtCompact(r.yang_total / Math.max(s.active_seconds / 3600, 1 / 3600))],
       [t("value_total"), (r) => fmtCompact(r.value_total || null)],

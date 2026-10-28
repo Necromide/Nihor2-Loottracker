@@ -92,7 +92,10 @@ class Database:
         s = config.defaults()
         with self.lock:
             for row in self.conn.execute("SELECT key, value FROM settings"):
-                s[row["key"]] = json.loads(row["value"])
+                v = json.loads(row["value"])
+                if row["key"] == "rules" and isinstance(v, dict):
+                    v = {**s["rules"], **v}  # new rule sections from updates stay available
+                s[row["key"]] = v
         return s
 
     def set_setting(self, key, value):

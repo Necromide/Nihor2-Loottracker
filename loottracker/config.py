@@ -7,7 +7,7 @@ in the app's settings page without touching code.
 import copy
 
 APP_NAME = "Nihor2 - Loottracker"
-APP_VERSION = "0.2.0"
+APP_VERSION = "0.3.0"
 
 DEFAULT_RULES = {
     # Every portal run ends with exactly one splinter drop.
@@ -41,6 +41,19 @@ DEFAULT_RULES = {
         "yang_presence_window_s": 600,  # no Yang lines at all nearby -> "no Yang data"
         "max_before_end_s": 900,     # Super-Elite must die at most this long before the splinter
     },
+    # Special items: only drops from the listed sources count (no bought/traded items).
+    # Sources: "<portal>_end" = end package of that portal (same second as its splinter),
+    #          "super_elite" = the Super-Elite drop package.
+    # "items" are name patterns ('*' wildcard), matched against German and English names.
+    "tracked": [
+        {"key": "bewitchment", "de": "Begleiter Verhexen", "en": "Companion Bewitchment",
+         "items": ["Companion Bewitchment", "Begleiter Verhexen"],
+         "sources": ["elite_end", "super_elite"]},
+        {"key": "satchel", "de": "Gürteltasche", "en": "Companion's Belt Satchel", "jackpot": True,
+         "items": ["Companion*Belt Satchel", "*Gürteltasche*"],
+         "sources": ["super_elite"]},
+    ],
+    "tracked_window_s": 2,  # tolerance around the package second (log timestamps jitter slightly)
 }
 
 # Items that only come out of chests. '*' is the only wildcard.
@@ -68,7 +81,7 @@ DEFAULT_CATEGORIES = [
 # German client name -> English name. Applied automatically so that runs and
 # statistics work for German clients and for players who switched languages.
 # Bump DEFAULT_ALIASES_VERSION when adding entries (they are then applied once more).
-DEFAULT_ALIASES_VERSION = 1
+DEFAULT_ALIASES_VERSION = 2
 DEFAULT_ALIASES = {
     # portals
     "Elite-Splitter": "Elite Splinter",
@@ -80,6 +93,13 @@ DEFAULT_ALIASES = {
     "Göttlicher Segen": "Divine Blessing",
     "Göttliches Verzaubern": "Divine Enchanting",
     "Natarajas Medaillon": "Nataraja's Medallion",
+    "Begleiter Verhexen": "Companion Bewitchment",
+    "Begleiter Siegel": "Companion Seal",
+    "Begleiter Serum [50-250]": "Companion Serum [50-250]",
+    "Begleiter Serum [250-500]": "Companion Serum [250-500]",
+    "Begleiter Serum [500-750]": "Companion Serum [500-750]",
+    "Gegenstand verhexen": "Bewitch Item",
+    "Gegenstand segnen": "Blessing Item",
     "Außergewöhnliche blaue Flamme": "Exceptional Blue Flame",
     "Außergewöhnliche rote Flamme": "Exceptional Red Flame",
     "Blauer Edelstein": "Blue Gemstone",

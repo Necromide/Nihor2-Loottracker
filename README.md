@@ -11,6 +11,7 @@ Ein lokales Tool für den Metin2-Server **Nihor2 – Chronicles of Jinteia**, da
 - **Portale** – Elite, Mystisch, Greater werden über ihren Splinter-Drop erkannt. Pro Item: Runs mit Drop, Rate mit 95-%-Bereich, Ø pro Run, Gesamt, Wert, Runs seit dem letzten Drop.
 - **Super-Elite** – Erkennung über das eigene Drop-Paket (beide Skill Book Chests + Divine Blessing/Enchanting + Nataraja's Medallion, getrennt vom Splinter). Quote, Durststrecken, Liste aller Funde mit Sicherheit („Yang bestätigt“ / „Nur Signatur“ / „Keine Yang-Daten“).
 - **Filter** – Zeitraum, Portale, Super-Elite, Sessions, Kategorie, Item-Suche, Wochentage, Uhrzeit, Mindest-Runs; Kisten-Inhalte und Drops außerhalb von Portalen jeweils ausblenden / einbeziehen / nur diese.
+- **Besondere Drops** – *Begleiter Verhexen / Companion Bewitchment* (nur aus dem Elite-Endboss oder Super-Elite) und der Jackpot *Gürteltasche / Companion's Belt Satchel* (nur vom Super-Elite) mit eigener Quote. Gekaufte oder gehandelte Items zählen nicht.
 - **Preise** (optional) pro Item → Wert pro Run und pro Stunde.
 - **Aliase** – zwei Namen desselben Items zusammenführen (z. B. nach einem Wechsel der Client-Sprache).
 - Deutsch / Englisch umschaltbar – und funktioniert mit **deutschem und englischem Client** (auch gemischt, wenn die Client-Sprache gewechselt wurde). Die deutschen Item-Namen werden automatisch den englischen zugeordnet.

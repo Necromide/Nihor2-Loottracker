@@ -347,7 +347,86 @@ class Stats:
             "super_elite": se_out,
             "series": series,
             "quality": self.quality(settings),
+            "tracked": self.tracked(f, settings, runs, segs),
         }
+
+    # ---- special tracked items --------------------------------------------
+    def tracked(self, f, settings, runs, segs):
+        """Counts special items only from their allowed sources (end package / Super-Elite package)."""
+        rules = settings["rules"]
+        defs = rules.get("tracked") or []
+        if not defs:
+            return []
+        conn = self.db.conn
+        w = int(rules.get("tracked_window_s", 2))
+        se_portal = rules["super_elite"]["portal"]
+        by_id = {r["id"]: r for r in runs}
+        n_by_type = {}
+        for r in runs:
+            n_by_type[r["type"]] = n_by_type.get(r["type"], 0) + 1
+        se_runs = [r for r in runs if r["type"] == se_portal and r["se_counted"]]
+        names = conn.execute("SELECT id, name, canon FROM items").fetchall()
+        lo_f, hi_f = f.get("from"), f.get("to")
+        out = []
+        for d in defs:
+            pats = d.get("items") or []
+            ids = [i for i, n, c in names if match_any(n, pats) or match_any(c, pats)]
+            sources = d.get("sources") or []
+            src_stats = {}
+            for s_ in sources:
+                if s_ == "super_elite":
+                    src_stats[s_] = {"source": s_, "drops": 0, "qty": 0, "events": len(se_runs)}
+                elif s_.endswith("_end"):
+                    src_stats[s_] = {"source": s_, "drops": 0, "qty": 0, "events": n_by_type.get(s_[:-4], 0)}
+            hits, excluded, runs_hit = [], 0, set()
+            if ids:
+                q = "SELECT ts, qty, run_id FROM drops WHERE item_id IN (%s)" % ",".join(str(i) for i in ids)
+                params = []
+                if lo_f is not None:
+                    q += " AND ts >= ?"; params.append(int(lo_f))
+                if hi_f is not None:
+                    q += " AND ts <= ?"; params.append(int(hi_f))
+                for ts, qty, rid in conn.execute(q + " ORDER BY ts", params):
+                    if segs is not None and not any(a <= ts <= b for a, b in segs):
+                        continue
+                    r = by_id.get(rid)
+                    src = None
+                    if r is not None:
+                        if "super_elite" in src_stats and r["se_counted"] and r["se_ts"] is not None \
+                                and abs(ts - r["se_ts"]) <= w:
+                            src = "super_elite"
+                        elif (r["type"] + "_end") in src_stats and abs(ts - r["end"]) <= w:
+                            src = r["type"] + "_end"
+                    if src is None:
+                        excluded += qty
+                        continue
+                    st = src_stats[src]
+                    st["drops"] += 1
+                    st["qty"] += qty
+                    runs_hit.add(rid)
+                    hits.append({"ts": ts, "qty": qty, "source": src, "run_id": rid})
+            for st in src_stats.values():
+                st["rate"] = st["drops"] / st["events"] if st["events"] else None
+                st["ci_lo"], st["ci_hi"] = wilson(st["drops"], st["events"])
+            # overall rate per eligible run (portal of the first *_end source, else Super-Elite runs)
+            base = next((s_[:-4] for s_ in sources if s_.endswith("_end")), None)
+            base_runs = [r for r in runs if r["type"] == base] if base else se_runs
+            n_base = len(base_runs)
+            k = len(runs_hit)
+            lo, hi = wilson(k, n_base)
+            last = hits[-1]["ts"] if hits else None
+            since = None
+            if base_runs:
+                last_end = max((by_id[h["run_id"]]["end"] for h in hits), default=None)
+                since = sum(1 for r in base_runs if last_end is None or r["end"] > last_end)
+            out.append({
+                "key": d.get("key"), "de": d.get("de"), "en": d.get("en"), "jackpot": bool(d.get("jackpot")),
+                "base": base or "super_elite", "base_runs": n_base, "runs_with": k,
+                "qty": sum(h["qty"] for h in hits), "rate": k / n_base if n_base else None,
+                "ci_lo": lo, "ci_hi": hi, "last": last, "since": since, "excluded_qty": excluded,
+                "sources": list(src_stats.values()), "hits": list(reversed(hits[-200:])),
+            })
+        return out
 
     # ---- data quality ---------------------------------------------------
     def quality(self, settings):

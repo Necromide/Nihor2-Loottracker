@@ -69,6 +69,11 @@ window.I18N = {
     set_reason_no_logs: "In diesem Ordner liegt keine info_chat_loot.log und kein loot_history_archive: {p}",
     setup_detecting: "Suche nach deinem Client…", setup_found: "Gefunden – zum Übernehmen anklicken:",
     setup_none_found: "Kein Client automatisch gefunden – bitte über „Durchsuchen…“ auswählen.", importing_text: "Logdateien werden eingelesen… Das dauert beim ersten Start etwa eine Minute.",
+    tr_title: "Besondere Drops", tr_per_run: "pro {p}-Run", tr_per_se: "pro Super-Elite",
+    tr_none_yet: "noch keiner in {n} – Rate {b} höchstens {hi} (95 %)", tr_src_end: "Aus dem {p}-Endboss", tr_src_se: "Vom Super-Elite",
+    tr_since: "Runs seit dem letzten", tr_since_se: "Super-Elites seit dem letzten", tr_never: "Noch nie gedroppt", tr_excluded: "Nicht gezählt",
+    tr_excluded_hint: "Gekauft, gehandelt, aus Kisten oder mitten im Run", tr_col_source: "Quelle",
+    tr_explain: "Gezählt werden nur Drops aus dem End-Paket eines Elite-Runs (gleiche Sekunde wie der Elite Splinter) bzw. aus dem Super-Elite-Paket. Gekaufte oder gehandelte Items zählen nicht.",
     yes: "ja", no: "nein", h: "h", min: "min", s: "s",
   },
   en: {
@@ -140,6 +145,11 @@ window.I18N = {
     set_reason_no_logs: "This folder contains no info_chat_loot.log and no loot_history_archive: {p}",
     setup_detecting: "Looking for your client…", setup_found: "Found – click to use:",
     setup_none_found: "No client found automatically – please choose it via “Browse…”.", importing_text: "Reading log files… On first start this takes about a minute.",
+    tr_title: "Special drops", tr_per_run: "per {p} run", tr_per_se: "per Super Elite",
+    tr_none_yet: "none yet in {n} – rate {b} at most {hi} (95%)", tr_src_end: "From the {p} end boss", tr_src_se: "From the Super Elite",
+    tr_since: "Runs since the last one", tr_since_se: "Super Elites since the last one", tr_never: "Never dropped yet", tr_excluded: "Not counted",
+    tr_excluded_hint: "Bought, traded, from chests or mid-run", tr_col_source: "Source",
+    tr_explain: "Only drops from an Elite run's end package (same second as the Elite Splinter) or from the Super Elite package count. Bought or traded items do not count.",
     yes: "yes", no: "no", h: "h", min: "min", s: "s",
   },
 };

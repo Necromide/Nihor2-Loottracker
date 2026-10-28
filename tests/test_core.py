@@ -122,6 +122,18 @@ class CoreTest(unittest.TestCase):
         red = [x for x in r["portals"]["elite"]["items"] if x["item"] == "Red Raw Diamond"][0]
         self.assertEqual(red["runs"], 2)  # German and English name counted as one item
 
+    def test_tracked_items(self):
+        d = "12/10/26"
+        lines = elite_run(d, 10, 0, se=True)
+        lines.insert(-1, line(d, "10:00:30", 1, "Companion Bewitchment"))        # end package -> counts
+        lines.insert(3, line(d, "10:00:10", 1, "Companion's Belt Satchel"))     # Super-Elite package -> counts
+        lines.insert(1, line(d, "10:00:02", 1, "Begleiter Verhexen"))           # mid-run (bought) -> not counted
+        self.write(self.active, lines + elite_run(d, 10, 5))
+        self.sync()
+        tr = {x["key"]: x for x in Stats(self.db).report({}, self.db.get_settings())["tracked"]}
+        self.assertEqual((tr["bewitchment"]["runs_with"], tr["bewitchment"]["base_runs"], tr["bewitchment"]["excluded_qty"]), (1, 2, 1))
+        self.assertEqual((tr["satchel"]["runs_with"], tr["satchel"]["base_runs"]), (1, 1))
+
 
 if __name__ == "__main__":
     unittest.main()

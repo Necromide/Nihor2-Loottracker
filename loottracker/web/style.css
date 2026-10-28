@@ -177,3 +177,4 @@ td.item { white-space: normal; min-width: 180px; }
 .spin { display: inline-block; width: 14px; height: 14px; border: 2px solid var(--border); border-top-color: var(--gold); border-radius: 50%; animation: rot .8s linear infinite; vertical-align: -2px; }
 @keyframes rot { to { transform: rotate(360deg); } }
 .price-in { width: 120px; text-align: right; }
+.tile.jackpot { border-color: var(--gold); background: linear-gradient(160deg, var(--gold-soft), transparent 70%), var(--surface-1); }
